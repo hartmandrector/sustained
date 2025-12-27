@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sustained Speeds Chart</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sustained Speeds Chart</h1>
+            <p>Interactive chart with moveable and transformable axes</p>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <button id="mainAxisToggle" class="primary-btn">Switch to Coefficients View</button>
+                <button id="resetView">Reset View</button>
+                <button id="toggleGrid">Toggle Grid</button>
+            </div>
+            
+            <div class="control-group" id="coeffControls">
+                <label>Coefficient Type:</label>
+                <label class="radio-group">
+                    <input type="radio" name="coeffType" value="k"> K-coefficients
+                </label>
+                <label class="radio-group">
+                    <input type="radio" name="coeffType" value="c" checked> C-coefficients
+                </label>
+                
+                <div id="scalingInputs" style="display: flex;">
+                    <label>ρ: <input type="number" id="rhoInput" value="0.9" step="0.1" min="0.1"></label>
+                    <label>S: <input type="number" id="sInput" value="2.0" step="0.1" min="0.1"></label>
+                    <label>m: <input type="number" id="mInput" value="80.0" step="1" min="1"></label>
+                </div>
+            </div>
+            
+            <div class="info">
+                <span id="viewMode">Speed View</span>
+                <span id="coeffMode">C-coefficients</span>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+    </div>
+    
+    <script type="module" src="utilities.js"></script>
+    <script type="module" src="interpolation.js"></script>
+    <script type="module" src="chart-simple.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
