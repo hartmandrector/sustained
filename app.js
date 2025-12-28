@@ -133,4 +133,52 @@ function setupControls() {
             }
         });
     }
+    
+    // Color customization handlers
+    const colorInputs = {
+        liftColor: 'lift',
+        dragColor: 'drag',
+        horizontalColor: 'horizontal',
+        verticalColor: 'vertical',
+        glide1Color: 'glide1',
+        glide2Color: 'glide2',
+        glide3Color: 'glide3',
+        backgroundColor: 'background',
+        legendColor: 'legend'
+    };
+    
+    Object.entries(colorInputs).forEach(([inputId, colorKey]) => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('change', (e) => {
+                if (chart) {
+                    chart.updateColors({ [colorKey]: e.target.value });
+                }
+            });
+        }
+    });
+    
+    // Visibility checkbox handlers
+    const visibilityCheckboxes = {
+        showLift: 'showLift',
+        showDrag: 'showDrag',
+        showHorizontal: 'showHorizontal',
+        showVertical: 'showVertical',
+        showGlide: 'showGlide',
+        showInnerCoeffLabels: 'showInnerCoeffLabels',
+        showOuterCoeffLabels: 'showOuterCoeffLabels',
+        showSpeedLabels: 'showSpeedLabels',
+        showGlideLabels: 'showGlideLabels'
+    };
+    
+    Object.entries(visibilityCheckboxes).forEach(([checkboxId, visibilityKey]) => {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.addEventListener('change', (e) => {
+                if (chart) {
+                    chart.updateVisibility({ [visibilityKey]: e.target.checked });
+                }
+            });
+        }
+    });
 }

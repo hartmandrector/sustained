@@ -21,6 +21,31 @@ export class SimpleChart {
         this.coeffType = 'c'; // 'k' or 'c' - default to C coefficients
         this.showGrid = true;
         
+        // Customization options
+        this.colors = {
+            lift: '#9b59b6',
+            drag: '#27ae60',
+            horizontal: '#3498db',
+            vertical: '#e74c3c',
+            glide1: '#e74c3c',
+            glide2: '#f39c12',
+            glide3: '#27ae60',
+            background: '#ffffff',
+            legend: '#000000'
+        };
+        
+        this.visibility = {
+            showLift: true,
+            showDrag: true,
+            showHorizontal: true,
+            showVertical: true,
+            showGlide: true,
+            showInnerCoeffLabels: true,
+            showOuterCoeffLabels: true,
+            showSpeedLabels: true,
+            showGlideLabels: true
+        };
+        
         // Animation state
         this.isAnimating = false;
         this.animationProgress = 0; // 0 = speed view, 1 = coeff view
@@ -73,6 +98,17 @@ export class SimpleChart {
         };
         
         requestAnimationFrame(animate);
+    }
+    
+    updateColors(colorUpdates) {
+        Object.assign(this.colors, colorUpdates);
+        this.generateGrid();
+        this.render();
+    }
+    
+    updateVisibility(visibilityUpdates) {
+        Object.assign(this.visibility, visibilityUpdates);
+        this.render();
     }
     
     toggleGrid() {
@@ -189,7 +225,7 @@ export class SimpleChart {
             this.allLines.push({ 
                 speedPoints, 
                 coeffPoints, 
-                color: '#e74c3c', 
+                color: this.colors.vertical, 
                 type: 'horizontal',
                 label: `VYS=${vys}`,
                 labelValue: vys
@@ -213,7 +249,7 @@ export class SimpleChart {
             this.allLines.push({ 
                 speedPoints, 
                 coeffPoints, 
-                color: '#3498db', 
+                color: this.colors.horizontal, 
                 type: 'vertical',
                 label: `VXS=${vxs}`,
                 labelValue: vxs
@@ -239,7 +275,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6', // Purple for CL lines
+                color: this.colors.lift, // Purple for CL lines
                 type: 'coeff-horizontal',
                 label: `CL=${cl.toFixed(1)}`,
                 labelValue: cl
@@ -262,7 +298,7 @@ export class SimpleChart {
                 this.allLines.push({
                     speedPoints,
                     coeffPoints,
-                    color: '#9b59b6',
+                    color: this.colors.lift,
                     type: 'coeff-horizontal',
                     label: `CL=${cl.toFixed(1)}`,
                     labelValue: cl
@@ -284,7 +320,7 @@ export class SimpleChart {
                 this.allLines.push({
                     speedPoints,
                     coeffPoints,
-                    color: '#9b59b6',
+                    color: this.colors.lift,
                     type: 'coeff-horizontal',
                     label: `CL=${cl.toFixed(1)}`,
                     labelValue: cl
@@ -311,7 +347,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60', // Green for CD lines
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${cd.toFixed(1)}`,
                 labelValue: cd
@@ -334,7 +370,7 @@ export class SimpleChart {
                 this.allLines.push({
                     speedPoints,
                     coeffPoints,
-                    color: '#27ae60',
+                    color: this.colors.drag,
                     type: 'coeff-vertical',
                     label: `CD=${cd.toFixed(1)}`,
                     labelValue: cd
@@ -356,7 +392,7 @@ export class SimpleChart {
                 this.allLines.push({
                     speedPoints,
                     coeffPoints,
-                    color: '#27ae60',
+                    color: this.colors.drag,
                     type: 'coeff-vertical',
                     label: `CD=${cd.toFixed(1)}`,
                     labelValue: cd
@@ -383,7 +419,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6',
+                color: this.colors.lift,
                 type: 'coeff-horizontal',
                 label: `CL=${cl.toFixed(0)}`,
                 labelValue: cl
@@ -405,7 +441,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6',
+                color: this.colors.lift,
                 type: 'coeff-horizontal',
                 label: `CL=${cl.toFixed(0)}`,
                 labelValue: cl
@@ -427,7 +463,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6',
+                color: this.colors.lift,
                 type: 'coeff-horizontal',
                 label: `CL=${(-cl).toFixed(0)}`,
                 labelValue: -cl
@@ -449,7 +485,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6',
+                color: this.colors.lift,
                 type: 'coeff-horizontal',
                 label: `CL=${(-cl).toFixed(0)}`,
                 labelValue: -cl
@@ -474,7 +510,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60',
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${cd.toFixed(0)}`,
                 labelValue: cd
@@ -496,7 +532,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60',
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${cd.toFixed(0)}`,
                 labelValue: cd
@@ -518,7 +554,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60',
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${(-cd).toFixed(0)}`,
                 labelValue: -cd
@@ -540,7 +576,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60',
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${(-cd).toFixed(0)}`,
                 labelValue: -cd
@@ -568,7 +604,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6',
+                color: this.colors.lift,
                 type: 'coeff-horizontal',
                 label: `CL=${cl.toFixed(0)}`,
                 labelValue: cl
@@ -590,7 +626,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#9b59b6',
+                color: this.colors.lift,
                 type: 'coeff-horizontal',
                 label: `CL=${(-cl).toFixed(0)}`,
                 labelValue: -cl
@@ -615,7 +651,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60',
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${cd.toFixed(0)}`,
                 labelValue: cd
@@ -637,7 +673,7 @@ export class SimpleChart {
             this.allLines.push({
                 speedPoints,
                 coeffPoints,
-                color: '#27ae60',
+                color: this.colors.drag,
                 type: 'coeff-vertical',
                 label: `CD=${(-cd).toFixed(0)}`,
                 labelValue: -cd
@@ -646,9 +682,9 @@ export class SimpleChart {
         
         // Glide ratio lines (through origin in all four quadrants)
         const glideRatios = [
-            { ratio: 1, color: '#e74c3c', label: '1:1 glide' },  // Red
-            { ratio: 2, color: '#f39c12', label: '2:1 glide' },  // Orange/Yellow
-            { ratio: 3, color: '#27ae60', label: '3:1 glide' }   // Green
+            { ratio: 1, color: this.colors.glide1, label: '1:1 glide' },
+            { ratio: 2, color: this.colors.glide2, label: '2:1 glide' },
+            { ratio: 3, color: this.colors.glide3, label: '3:1 glide' }
         ];
         
         glideRatios.forEach(({ ratio, color, label }) => {
@@ -748,7 +784,7 @@ export class SimpleChart {
     
     draw() {
         // Clear
-        this.ctx.fillStyle = 'white';
+        this.ctx.fillStyle = this.colors.background;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         const cx = this.canvas.width / 2;
@@ -777,6 +813,13 @@ export class SimpleChart {
         this.allLines.forEach(line => {
             const { speedPoints, coeffPoints, color, type } = line;
             const label = this.getLineLabel(line);
+            
+            // Check visibility settings - skip if line type is hidden
+            if (type === 'horizontal' && !this.visibility.showVertical) return;
+            if (type === 'vertical' && !this.visibility.showHorizontal) return;
+            if (type === 'coeff-horizontal' && !this.visibility.showLift) return;
+            if (type === 'coeff-vertical' && !this.visibility.showDrag) return;
+            if (type === 'glide' && !this.visibility.showGlide) return;
             
             // Determine if we should show this label
             // For inner grid (CL/CD from 1-10), only show labels at 1, 5 and 10
@@ -1007,8 +1050,28 @@ export class SimpleChart {
             
             this.ctx.stroke();
             
+            // Check label visibility settings before storing
+            let shouldShowLabel = showLabel;
+            if (type === 'horizontal' || type === 'vertical') {
+                shouldShowLabel = shouldShowLabel && this.visibility.showSpeedLabels;
+            } else if (type === 'coeff-horizontal') {
+                if (absValue >= 1) {
+                    shouldShowLabel = shouldShowLabel && this.visibility.showInnerCoeffLabels;
+                } else {
+                    shouldShowLabel = shouldShowLabel && this.visibility.showOuterCoeffLabels;
+                }
+            } else if (type === 'coeff-vertical') {
+                if (absValue >= 1) {
+                    shouldShowLabel = shouldShowLabel && this.visibility.showInnerCoeffLabels;
+                } else {
+                    shouldShowLabel = shouldShowLabel && this.visibility.showOuterCoeffLabels;
+                }
+            } else if (type === 'glide') {
+                shouldShowLabel = shouldShowLabel && this.visibility.showGlideLabels;
+            }
+            
             // Store label position only if we should show this label
-            if (showLabel && labelX !== undefined && labelY !== undefined) {
+            if (shouldShowLabel && labelX !== undefined && labelY !== undefined) {
                 labelPositions.push({ x: labelX, y: labelY, label, color, type });
             }
         });
@@ -1020,18 +1083,7 @@ export class SimpleChart {
         this.ctx.textBaseline = 'middle';
         
         labelPositions.forEach(({ x, y, label, color, type }) => {
-            // Draw background for readability
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            const metrics = this.ctx.measureText(label);
-            const padding = 4;
-            this.ctx.fillRect(
-                x - metrics.width / 2 - padding,
-                y - 8,
-                metrics.width + padding * 2,
-                16
-            );
-            
-            // Draw text
+            // Draw text without background for transparency
             this.ctx.fillStyle = color;
             this.ctx.fillText(label, x, y);
         });
@@ -1042,7 +1094,7 @@ export class SimpleChart {
     }
     
     drawLabels() {
-        this.ctx.fillStyle = 'black';
+        this.ctx.fillStyle = this.colors.legend;
         this.ctx.font = 'bold 14px Arial';
         
         // View label logic: 

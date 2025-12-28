@@ -36,6 +36,42 @@
                 </div>
             </div>
             
+            <div class="control-group" id="customization">
+                <details>
+                    <summary><strong>Chart Appearance</strong></summary>
+                    <label>Background Color: <input type="color" id="backgroundColor" value="#ffffff"></label>
+                    <label>Legend Font Color: <input type="color" id="legendColor" value="#000000"></label>
+                </details>
+                
+                <details>
+                    <summary><strong>Coefficient Lines</strong></summary>
+                    <label>Lift Color: <input type="color" id="liftColor" value="#9b59b6"></label>
+                    <label>Drag Color: <input type="color" id="dragColor" value="#27ae60"></label>
+                    <label><input type="checkbox" id="showLift" checked> Show Lift</label>
+                    <label><input type="checkbox" id="showDrag" checked> Show Drag</label>
+                    <label><input type="checkbox" id="showInnerCoeffLabels" checked> Inner Labels</label>
+                    <label><input type="checkbox" id="showOuterCoeffLabels" checked> Outer Labels</label>
+                </details>
+                
+                <details>
+                    <summary><strong>Speed Lines</strong></summary>
+                    <label>Horizontal Color: <input type="color" id="horizontalColor" value="#3498db"></label>
+                    <label>Vertical Color: <input type="color" id="verticalColor" value="#e74c3c"></label>
+                    <label><input type="checkbox" id="showHorizontal" checked> Show Horizontal</label>
+                    <label><input type="checkbox" id="showVertical" checked> Show Vertical</label>
+                    <label><input type="checkbox" id="showSpeedLabels" checked> Show Labels</label>
+                </details>
+                
+                <details>
+                    <summary><strong>Glide Lines</strong></summary>
+                    <label>1:1 Color: <input type="color" id="glide1Color" value="#e74c3c"></label>
+                    <label>2:1 Color: <input type="color" id="glide2Color" value="#f39c12"></label>
+                    <label>3:1 Color: <input type="color" id="glide3Color" value="#27ae60"></label>
+                    <label><input type="checkbox" id="showGlide" checked> Show Glide Lines</label>
+                    <label><input type="checkbox" id="showGlideLabels" checked> Show Labels</label>
+                </details>
+            </div>
+            
             <div class="info">
                 <span id="viewMode">Speed View</span>
                 <span id="coeffMode">C-coefficients</span>
