@@ -21,6 +21,9 @@ export class SimpleChart {
         this.coeffType = 'c'; // 'k' or 'c' - default to C coefficients
         this.showGrid = true;
         
+        // Dataset manager reference (will be set from app.js)
+        this.datasetManager = null;
+        
         // Customization options
         this.colors = {
             lift: '#9b59b6',
@@ -1090,7 +1093,88 @@ export class SimpleChart {
         
         this.ctx.globalAlpha = 1.0;
         
+        // Draw loaded datasets
+        this.drawDatasets();
+        
         this.drawLabels();
+    }
+    
+    drawDatasets() {
+        if (!this.datasetManager) return;
+        
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+        const range = this.getCoeffRange();
+        
+        const visibleDatasets = this.datasetManager.getVisibleDatasets();
+        
+        visibleDatasets.forEach(dataset => {
+            this.ctx.strokeStyle = dataset.color;
+            this.ctx.fillStyle = dataset.color;
+            this.ctx.lineWidth = 3;
+            this.ctx.globalAlpha = 0.8;
+            
+            // Draw line connecting points
+            this.ctx.beginPath();
+            let started = false;
+            
+            for (let i = 0; i < dataset.speedData.length; i++) {
+                const speedPoint = dataset.speedData[i];
+                const coeffPoint = dataset.coeffData[i];
+                
+                // Calculate position in speed space
+                const x1 = cx + (speedPoint.vxs / 150) * (this.canvas.width / 2);
+                const y1 = cy + (speedPoint.vys / 150) * (this.canvas.height / 2);
+                
+                // Calculate position in coefficient space
+                const coeff = this.getCoeffValues(coeffPoint);
+                const x2 = cx - (coeff.cd / range) * (this.canvas.width / 2);
+                const y2 = cy - (coeff.cl / range) * (this.canvas.height / 2);
+                
+                // Interpolate between the two coordinate systems
+                const x = x1 + (x2 - x1) * this.animationProgress;
+                const y = y1 + (y2 - y1) * this.animationProgress;
+                
+                if (isFinite(x) && isFinite(y)) {
+                    if (!started) {
+                        this.ctx.moveTo(x, y);
+                        started = true;
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+            }
+            
+            this.ctx.stroke();
+            
+            // Draw points on top of the line
+            this.ctx.globalAlpha = 1.0;
+            for (let i = 0; i < dataset.speedData.length; i++) {
+                const speedPoint = dataset.speedData[i];
+                const coeffPoint = dataset.coeffData[i];
+                
+                // Calculate position in speed space
+                const x1 = cx + (speedPoint.vxs / 150) * (this.canvas.width / 2);
+                const y1 = cy + (speedPoint.vys / 150) * (this.canvas.height / 2);
+                
+                // Calculate position in coefficient space
+                const coeff = this.getCoeffValues(coeffPoint);
+                const x2 = cx - (coeff.cd / range) * (this.canvas.width / 2);
+                const y2 = cy - (coeff.cl / range) * (this.canvas.height / 2);
+                
+                // Interpolate between the two coordinate systems
+                const x = x1 + (x2 - x1) * this.animationProgress;
+                const y = y1 + (y2 - y1) * this.animationProgress;
+                
+                if (isFinite(x) && isFinite(y)) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+        });
+        
+        this.ctx.globalAlpha = 1.0;
     }
     
     drawLabels() {

@@ -1,8 +1,10 @@
 import { SimpleChart } from './chart-simple.js';
+import { DataSetManager } from './dataLoader.js';
 
 // Application state
 let chart;
 let coeffType = 'c'; // 'k' or 'c' - default to C coefficients
+let datasetManager;
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeChart();
@@ -15,6 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeChart() {
     const canvas = document.getElementById('chartCanvas');
     chart = new SimpleChart(canvas);
+    
+    // Initialize dataset manager
+    datasetManager = new DataSetManager();
+    chart.datasetManager = datasetManager;
 }
 
 /**
@@ -107,6 +113,10 @@ function setupControls() {
             if (chart && !isNaN(value) && value > 0) {
                 chart.rho = value;
                 chart.generateGrid();
+                // Regenerate dataset speed data with new parameters
+                if (datasetManager) {
+                    datasetManager.regenerateAllSpeedData(value, chart.s, chart.m);
+                }
                 chart.render();
             }
         });
@@ -118,6 +128,10 @@ function setupControls() {
             if (chart && !isNaN(value) && value > 0) {
                 chart.s = value;
                 chart.generateGrid();
+                // Regenerate dataset speed data with new parameters
+                if (datasetManager) {
+                    datasetManager.regenerateAllSpeedData(chart.rho, value, chart.m);
+                }
                 chart.render();
             }
         });
@@ -129,6 +143,10 @@ function setupControls() {
             if (chart && !isNaN(value) && value > 0) {
                 chart.m = value;
                 chart.generateGrid();
+                // Regenerate dataset speed data with new parameters
+                if (datasetManager) {
+                    datasetManager.regenerateAllSpeedData(chart.rho, chart.s, value);
+                }
                 chart.render();
             }
         });
@@ -181,4 +199,146 @@ function setupControls() {
             });
         }
     });
+    
+    // Data file upload handlers
+    setupDataFileUpload();
+}
+
+/**
+ * Setup data file upload functionality
+ */
+function setupDataFileUpload() {
+    const uploadBtn = document.getElementById('uploadDataBtn');
+    const fileInput = document.getElementById('dataFileInput');
+    const datasetList = document.getElementById('datasetList');
+    
+    if (uploadBtn && fileInput) {
+        // Trigger file input when button is clicked
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                loadDataFile(file);
+            }
+            // Reset input so same file can be loaded again
+            fileInput.value = '';
+        });
+    }
+}
+
+/**
+ * Load and parse a data file
+ */
+function loadDataFile(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        try {
+            const content = e.target.result;
+            
+            // Generate random color for this dataset
+            const color = getRandomColor();
+            
+            // Get current parameters from chart
+            const rho = chart.rho;
+            const s = chart.s;
+            const m = chart.m;
+            
+            // Add dataset to manager
+            const datasetId = datasetManager.addDataset(file.name, content, rho, s, m, color);
+            
+            // Create UI control for this dataset
+            addDatasetControl(datasetId, file.name, color);
+            
+            // Redraw chart
+            chart.render();
+            
+        } catch (error) {
+            alert(`Error loading file: ${error.message}`);
+            console.error('File load error:', error);
+        }
+    };
+    
+    reader.onerror = () => {
+        alert('Error reading file');
+    };
+    
+    reader.readAsText(file);
+}
+
+/**
+ * Add UI controls for a dataset
+ */
+function addDatasetControl(datasetId, fileName, color) {
+    const datasetList = document.getElementById('datasetList');
+    if (!datasetList) return;
+    
+    // Create dataset item container
+    const datasetItem = document.createElement('div');
+    datasetItem.className = 'dataset-item';
+    datasetItem.id = `dataset-${datasetId}`;
+    
+    // Dataset name
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'dataset-name';
+    nameSpan.textContent = fileName;
+    nameSpan.title = fileName; // Show full name on hover
+    
+    // Controls container
+    const controls = document.createElement('div');
+    controls.className = 'dataset-controls';
+    
+    // Color picker
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = color;
+    colorInput.className = 'dataset-color';
+    colorInput.addEventListener('change', (e) => {
+        datasetManager.updateColor(datasetId, e.target.value);
+        chart.render();
+    });
+    
+    // Visibility checkbox
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = true;
+    checkbox.className = 'dataset-checkbox';
+    checkbox.addEventListener('change', (e) => {
+        datasetManager.updateVisibility(datasetId, e.target.checked);
+        chart.render();
+    });
+    
+    // Remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = 'Remove';
+    removeBtn.className = 'dataset-remove';
+    removeBtn.addEventListener('click', () => {
+        datasetManager.removeDataset(datasetId);
+        datasetItem.remove();
+        chart.render();
+    });
+    
+    // Assemble controls
+    controls.appendChild(colorInput);
+    controls.appendChild(checkbox);
+    controls.appendChild(removeBtn);
+    
+    datasetItem.appendChild(nameSpan);
+    datasetItem.appendChild(controls);
+    
+    datasetList.appendChild(datasetItem);
+}
+
+/**
+ * Generate a random color for datasets
+ */
+function getRandomColor() {
+    const hue = Math.floor(Math.random() * 360);
+    const saturation = 70 + Math.floor(Math.random() * 20); // 70-90%
+    const lightness = 45 + Math.floor(Math.random() * 10); // 45-55%
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }

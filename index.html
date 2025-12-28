@@ -70,6 +70,17 @@
                     <label><input type="checkbox" id="showGlide" checked> Show Glide Lines</label>
                     <label><input type="checkbox" id="showGlideLabels" checked> Show Labels</label>
                 </details>
+                
+                <details open>
+                    <summary><strong>Data Files</strong></summary>
+                    <div class="file-upload-section">
+                        <input type="file" id="dataFileInput" accept=".txt,.js" style="display: none;">
+                        <button id="uploadDataBtn" class="primary-btn">Load Data File</button>
+                        <div id="datasetList" class="dataset-list">
+                            <!-- Dataset controls will be added here dynamically -->
+                        </div>
+                    </div>
+                </details>
             </div>
             
             <div class="info">
@@ -85,6 +96,7 @@
     
     <script type="module" src="utilities.js"></script>
     <script type="module" src="interpolation.js"></script>
+    <script type="module" src="dataLoader.js"></script>
     <script type="module" src="chart-simple.js"></script>
     <script type="module" src="app.js"></script>
 </body>
