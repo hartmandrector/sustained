@@ -43,6 +43,7 @@ export class SimpleChart {
             showHorizontal: true,
             showVertical: true,
             showGlide: true,
+            showInnerSpeeds: true,
             showInnerCoeffLabels: true,
             showOuterCoeffLabels: true,
             showSpeedLabels: true,
@@ -254,6 +255,54 @@ export class SimpleChart {
                 coeffPoints, 
                 color: this.colors.horizontal, 
                 type: 'vertical',
+                label: `VXS=${vxs}`,
+                labelValue: vxs
+            });
+        }
+        
+        // Inner horizontal speed lines (constant VYS, -30 to 30)
+        for (let vys of [-30, -20, -10, 10, 20, 30]) {
+            const speedPoints = [];
+            const coeffPoints = [];
+            
+            for (let vxs = -150; vxs <= 150; vxs += 5) {
+                speedPoints.push({ vxs, vys });
+                
+                const vxsMps = mphToMps(vxs);
+                const vysMps = mphToMps(vys);
+                const { cl, cd } = ssToCoeff(vxsMps, vysMps, this.s, this.m, this.rho);
+                coeffPoints.push({ cl, cd });
+            }
+            
+            this.allLines.push({ 
+                speedPoints, 
+                coeffPoints, 
+                color: this.colors.vertical, 
+                type: 'horizontal-inner',
+                label: `VYS=${vys}`,
+                labelValue: vys
+            });
+        }
+        
+        // Inner vertical speed lines (constant VXS, -30 to 30)
+        for (let vxs of [-30, -20, -10, 10, 20, 30]) {
+            const speedPoints = [];
+            const coeffPoints = [];
+            
+            for (let vys = -150; vys <= 150; vys += 5) {
+                speedPoints.push({ vxs, vys });
+                
+                const vxsMps = mphToMps(vxs);
+                const vysMps = mphToMps(vys);
+                const { cl, cd } = ssToCoeff(vxsMps, vysMps, this.s, this.m, this.rho);
+                coeffPoints.push({ cl, cd });
+            }
+            
+            this.allLines.push({ 
+                speedPoints, 
+                coeffPoints, 
+                color: this.colors.horizontal, 
+                type: 'vertical-inner',
                 label: `VXS=${vxs}`,
                 labelValue: vxs
             });
@@ -820,6 +869,8 @@ export class SimpleChart {
             // Check visibility settings - skip if line type is hidden
             if (type === 'horizontal' && !this.visibility.showVertical) return;
             if (type === 'vertical' && !this.visibility.showHorizontal) return;
+            if (type === 'horizontal-inner' && !this.visibility.showInnerSpeeds) return;
+            if (type === 'vertical-inner' && !this.visibility.showInnerSpeeds) return;
             if (type === 'coeff-horizontal' && !this.visibility.showLift) return;
             if (type === 'coeff-vertical' && !this.visibility.showDrag) return;
             if (type === 'glide' && !this.visibility.showGlide) return;
@@ -948,6 +999,8 @@ export class SimpleChart {
                 let x2_interp = x2;
                 let y2_interp = y2;
                 
+                // DISABLED: Mirrored target logic for forcing interpolation through origin
+                /*
                 // Apply mirrored target logic to force interpolation through origin
                 // Check if point needs to cross origin (different quadrants)
                 const startQuadX = x1 - cx; // relative to center
@@ -980,6 +1033,7 @@ export class SimpleChart {
                         y2_interp = y2_mirror;
                     }
                 }
+                */
                 
                 // Interpolate between the two
                 const x = x1 + (x2_interp - x1) * this.animationProgress;

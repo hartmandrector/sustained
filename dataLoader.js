@@ -18,8 +18,8 @@ export class DataSetManager {
      */
     parseStallpointData(fileContent) {
         try {
-            // Find the stallpoint array in the file
-            const stallpointMatch = fileContent.match(/stallpoint:\s*\[(.*?)\],/s);
+            // Find the stallpoint array in the file (comma after array is optional)
+            const stallpointMatch = fileContent.match(/stallpoint:\s*\[(.*?)\]/s);
             
             if (!stallpointMatch) {
                 throw new Error('No stallpoint data found in file');

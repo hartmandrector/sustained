@@ -183,6 +183,7 @@ function setupControls() {
         showHorizontal: 'showHorizontal',
         showVertical: 'showVertical',
         showGlide: 'showGlide',
+        showInnerSpeeds: 'showInnerSpeeds',
         showInnerCoeffLabels: 'showInnerCoeffLabels',
         showOuterCoeffLabels: 'showOuterCoeffLabels',
         showSpeedLabels: 'showSpeedLabels',
