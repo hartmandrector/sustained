@@ -1,5 +1,5 @@
 import { coeffToSS, ssToCoeff, mphToMps, mpsToMph } from './utilities.js';
-import { easeInOutExpo } from './interpolation.js';
+import { easeInOutExpo, easeZoom } from './interpolation.js';
 
 export class SimpleChart {
     constructor(canvas) {
@@ -20,6 +20,9 @@ export class SimpleChart {
         this.currentView = 'speed'; // 'speed' or 'coeff'
         this.coeffType = 'c'; // 'k' or 'c' - default to C coefficients
         this.showGrid = true;
+        
+        // Zoom state
+        this.quadrantZoom = false; // Whether quadrant zoom is enabled
         
         // Dataset manager reference (will be set from app.js)
         this.datasetManager = null;
@@ -834,6 +837,196 @@ export class SimpleChart {
         this.draw();
     }
     
+    /**
+     * Calculate zoom transformation parameters based on quadrant zoom and animation progress
+     * Returns { offsetX, offsetY, scale }
+     */
+    getZoomTransform() {
+        if (!this.quadrantZoom) {
+            // No zoom - standard view
+            return { offsetX: 0, offsetY: 0, scale: 1.0 };
+        }
+        
+        // Quadrant zoom is enabled
+        // Use inverse easing for zoom (fast at ends, slow in middle)
+        const t = this.animationProgress;
+        const easedZoom = easeZoom(t);
+        
+        // Get data bounds if datasets are loaded
+        let dataBounds = this.calculateDataBounds(t);
+        
+        // At t=0 (speed view): zoom to bottom-right quadrant (positive VXS, positive VYS)
+        // At t=0.5 (transition): zoom out to show all quadrants
+        // At t=1 (coeff view): zoom to upper-left quadrant (negative CD, positive CL)
+        
+        // Calculate zoom scale using zoom easing and data bounds
+        // At endpoints (0 and 1): scale to fit data in one quadrant
+        // At middle (0.5): scale = 0.8 (zoomed out during transition)
+        const scaleAtMid = 0.8;  // Zoom out during transition
+        
+        let scale;
+        if (easedZoom < 0.5) {
+            // First half: zoom from data-fitted scale down to 0.8
+            scale = dataBounds.scale + (scaleAtMid - dataBounds.scale) * (easedZoom / 0.5);
+        } else {
+            // Second half: zoom from 0.8 back up to data-fitted scale
+            scale = scaleAtMid + (dataBounds.scale - scaleAtMid) * ((easedZoom - 0.5) / 0.5);
+        }
+        
+        // Calculate pan offset (as fraction of canvas) using zoom easing
+        // Canvas translate: positive offset moves content (showing opposite side)
+        //   - negative offsetX shifts content left → shows RIGHT side (+VXS)
+        //   - negative offsetY shifts content up → shows BOTTOM (+VYS in their convention)
+        // At t=0 (speed view): show bottom-right quadrant (+VXS, +VYS)
+        // At t=0.5: centered (no offset)
+        // At t=1 (coeff view): show upper-left quadrant (-CD, +CL)
+        
+        let offsetX, offsetY;
+        if (easedZoom < 0.5) {
+            // First half: pan from bottom-right to center
+            const panProgress = easedZoom / 0.5;
+            // Speed view bottom-right: use data-based offset
+            offsetX = dataBounds.offsetX * (1 - panProgress);  // From data offset to 0
+            offsetY = dataBounds.offsetY * (1 - panProgress);  // From data offset to 0
+        } else {
+            // Second half: pan from center to upper-left
+            const panProgress = (easedZoom - 0.5) / 0.5;
+            // Coeff view upper-left: use data-based offset
+            offsetX = dataBounds.offsetX * panProgress;   // From 0 to data offset
+            offsetY = dataBounds.offsetY * panProgress;   // From 0 to data offset
+        }
+        
+        return { offsetX, offsetY, scale };
+    }
+    
+    /**
+     * Calculate data bounds for zoom fitting
+     * Returns { scale, offsetX, offsetY } based on loaded data
+     */
+    calculateDataBounds(animationProgress) {
+        // Default values (no data or data doesn't affect bounds)
+        let defaultScale = 2.0;  // Standard quadrant zoom
+        let defaultOffsetX = -0.25;  // Speed view: bottom-right
+        let defaultOffsetY = -0.25;
+        
+        // Check if we're closer to speed view (t < 0.5) or coeff view (t >= 0.5)
+        const useSpeedView = animationProgress < 0.5;
+        
+        if (!this.datasetManager) {
+            // At coeff view (t >= 0.5), invert offsets for upper-left quadrant
+            if (!useSpeedView) {
+                defaultOffsetX = 0.25;
+                defaultOffsetY = 0.25;
+            }
+            return { scale: defaultScale, offsetX: defaultOffsetX, offsetY: defaultOffsetY };
+        }
+        
+        const visibleDatasets = this.datasetManager.getVisibleDatasets();
+        if (visibleDatasets.length === 0) {
+            // At coeff view (t >= 0.5), invert offsets for upper-left quadrant
+            if (!useSpeedView) {
+                defaultOffsetX = 0.25;
+                defaultOffsetY = 0.25;
+            }
+            return { scale: defaultScale, offsetX: defaultOffsetX, offsetY: defaultOffsetY };
+        }
+        
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        
+        if (useSpeedView) {
+            // Use speed data bounds
+            for (const dataset of visibleDatasets) {
+                for (const point of dataset.speedData) {
+                    if (point.vxs > maxX) maxX = point.vxs;
+                    if (point.vxs < minX) minX = point.vxs;
+                    if (point.vys > maxY) maxY = point.vys;
+                    if (point.vys < minY) minY = point.vys;
+                }
+            }
+            
+            // Speed view focuses on bottom-right quadrant (positive VXS, positive VYS)
+            // Ensure we include the origin and positive values
+            minX = Math.min(minX, 0);
+            minY = Math.min(minY, 0);
+            maxX = Math.max(maxX, 0);
+            maxY = Math.max(maxY, 0);
+            
+            // Calculate required range (using positive quadrant)
+            const rangeX = maxX;
+            const rangeY = maxY;
+            const maxRange = Math.max(rangeX, rangeY);
+            
+            // Standard view shows ±150 mph, one quadrant shows 0 to 150
+            // Scale = how much we need to fit the data
+            // If data goes to 150, scale = 2.0 (standard)
+            // If data goes to 200, scale = 150/200 * 2.0 = 1.5 (zoom out more)
+            const standardQuadrantRange = 150;
+            const scaleAdjustment = standardQuadrantRange / Math.max(maxRange, standardQuadrantRange);
+            const scale = 2.0 * scaleAdjustment;
+            
+            // Calculate center of data in positive quadrant
+            const centerX = maxX / 2;
+            const centerY = maxY / 2;
+            
+            // Convert to offset (as fraction of canvas half-width)
+            // Offset is negative to show positive values
+            const offsetX = -(centerX / standardQuadrantRange) * 0.5;
+            const offsetY = -(centerY / standardQuadrantRange) * 0.5;
+            
+            return { scale, offsetX, offsetY };
+        } else {
+            // Use coefficient data bounds
+            const range = this.getCoeffRange();
+            
+            for (const dataset of visibleDatasets) {
+                for (const point of dataset.coeffData) {
+                    const coeff = this.getCoeffValues(point);
+                    if (coeff.cd > maxX) maxX = coeff.cd;
+                    if (coeff.cd < minX) minX = coeff.cd;
+                    if (coeff.cl > maxY) maxY = coeff.cl;
+                    if (coeff.cl < minY) minY = coeff.cl;
+                }
+            }
+            
+            // Coeff view focuses on upper-left quadrant (negative CD, positive CL)
+            // Ensure we include the origin
+            minX = Math.min(minX, 0);
+            maxX = Math.max(maxX, 0);
+            minY = Math.min(minY, 0);
+            maxY = Math.max(maxY, 0);
+            
+            // Calculate the extent in the upper-left quadrant direction
+            const rangeXLeft = Math.abs(minX);  // Extent to the left (negative CD)
+            const rangeYUp = maxY;               // Extent upward (positive CL)
+            
+            // We want to show upper-left quadrant, so use the maximum extent in that direction
+            const maxDataRange = Math.max(rangeXLeft, rangeYUp);
+            
+            // Standard view shows ±range, one quadrant shows 0 to range
+            const standardQuadrantRange = range;
+            
+            // Adjust scale to fit the data, but allow some extra room
+            const scaleAdjustment = standardQuadrantRange / Math.max(maxDataRange * 1.2, standardQuadrantRange);
+            const scale = 2.0 * scaleAdjustment;
+            
+            // Base offset for upper-left quadrant
+            let offsetX = 0.25;
+            let offsetY = 0.25;
+            
+            // Fine-tune offset based on data center within the quadrant
+            // Data extends from minX to 0 in X, and 0 to maxY in Y
+            const centerX = minX / 2;  // Center of data range (negative)
+            const centerY = maxY / 2;  // Center of data range (positive)
+            
+            // Adjust offsets to center on data (small adjustments to base 0.25)
+            offsetX += (Math.abs(centerX) / standardQuadrantRange) * 0.1;
+            offsetY += (centerY / standardQuadrantRange) * 0.1;
+            
+            return { scale, offsetX, offsetY };
+        }
+    }
+
     draw() {
         // Clear
         this.ctx.fillStyle = this.colors.background;
@@ -841,6 +1034,15 @@ export class SimpleChart {
         
         const cx = this.canvas.width / 2;
         const cy = this.canvas.height / 2;
+        
+        // Get zoom transformation
+        const zoom = this.getZoomTransform();
+        
+        // Apply zoom transformation
+        this.ctx.save();
+        this.ctx.translate(cx, cy);
+        this.ctx.scale(zoom.scale, zoom.scale);
+        this.ctx.translate(-cx + zoom.offsetX * this.canvas.width, -cy + zoom.offsetY * this.canvas.height);
         
         // Draw axes
         this.ctx.strokeStyle = '#666';
@@ -855,6 +1057,7 @@ export class SimpleChart {
         this.ctx.stroke();
         
         if (!this.showGrid) {
+            this.ctx.restore();
             this.drawLabels();
             return;
         }
@@ -1150,6 +1353,9 @@ export class SimpleChart {
         // Draw loaded datasets
         this.drawDatasets();
         
+        // Restore context (undo zoom transformation)
+        this.ctx.restore();
+        
         this.drawLabels();
     }
     
@@ -1235,25 +1441,28 @@ export class SimpleChart {
         this.ctx.fillStyle = this.colors.legend;
         this.ctx.font = 'bold 14px Arial';
         
+        // Position legend on right side
+        const legendX = this.canvas.width - 500;
+        
         // View label logic: 
         // animationProgress = 0 means speed grid is straight (Speed View)
         // animationProgress = 1 means coeff grid is straight (Coefficient View)
         if (this.animationProgress > 0.5) {
             // Coefficient space labels (coeff grid is straight/rectangular)
-            this.ctx.fillText('COEFFICIENT VIEW', 150, 25);
+            this.ctx.fillText('COEFFICIENT VIEW', legendX, 25);
             this.ctx.font = '12px Arial';
             const xLabel = this.coeffType === 'k' ? 'KD' : 'CD';
             const yLabel = this.coeffType === 'k' ? 'KL' : 'CL';
-            this.ctx.fillText(`X-axis: ${xLabel} (drag coefficient, +1 LEFT to -1 RIGHT)`, 150, 45);
-            this.ctx.fillText(`Y-axis: ${yLabel} (lift coefficient, -1 to +1)`, 150, 65);
-            this.ctx.fillText('Speed grid lines are curved in this view', 150, 85);
+            this.ctx.fillText(`X-axis: ${xLabel} (drag coefficient, +1 LEFT to -1 RIGHT)`, legendX, 45);
+            this.ctx.fillText(`Y-axis: ${yLabel} (lift coefficient, -1 to +1)`, legendX, 65);
+            this.ctx.fillText('Speed grid lines are curved in this view', legendX, 85);
         } else {
             // Speed space labels (speed grid is straight/rectangular)
-            this.ctx.fillText('SPEED VIEW', 150, 25);
+            this.ctx.fillText('SPEED VIEW', legendX, 25);
             this.ctx.font = '12px Arial';
-            this.ctx.fillText('X-axis: VXS (horizontal speed, -150 to +150 mph)', 150, 45);
-            this.ctx.fillText('Y-axis: VYS (vertical speed, -150 to +150 mph)', 150, 65);
-            this.ctx.fillText('Red = constant VYS | Blue = constant VXS', 150, 85);
+            this.ctx.fillText('X-axis: VXS (horizontal speed, -150 to +150 mph)', legendX, 45);
+            this.ctx.fillText('Y-axis: VYS (vertical speed, -150 to +150 mph)', legendX, 65);
+            this.ctx.fillText('Red = constant VYS | Blue = constant VXS', legendX, 85);
         }
     }
 }

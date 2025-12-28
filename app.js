@@ -201,6 +201,17 @@ function setupControls() {
         }
     });
     
+    // Quadrant zoom checkbox handler
+    const quadrantZoomCheckbox = document.getElementById('quadrantZoom');
+    if (quadrantZoomCheckbox) {
+        quadrantZoomCheckbox.addEventListener('change', (e) => {
+            if (chart) {
+                chart.quadrantZoom = e.target.checked;
+                chart.render();
+            }
+        });
+    }
+    
     // Data file upload handlers
     setupDataFileUpload();
 }
