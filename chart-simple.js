@@ -46,7 +46,7 @@ export class SimpleChart {
         
         const startProgress = this.animationProgress;
         const targetProgress = targetView === 'coeff' ? 1 : 0;
-        const duration = 1500; // milliseconds
+        const duration = 6000; // milliseconds
         const startTime = performance.now();
         
         const animate = (currentTime) => {
@@ -222,8 +222,9 @@ export class SimpleChart {
         
         // Coefficient horizontal lines (constant CL)
         for (let cl = -1.0; cl <= 1.0; cl += 0.2) {
-            const speedPoints = [];
-            const coeffPoints = [];
+            // Main segment: CD from -1 to 1
+            let speedPoints = [];
+            let coeffPoints = [];
             
             for (let cd = -1.0; cd <= 1.0; cd += 0.05) {
                 coeffPoints.push({ cl, cd });
@@ -243,12 +244,59 @@ export class SimpleChart {
                 label: `CL=${cl.toFixed(1)}`,
                 labelValue: cl
             });
+            
+            // Extended segments: CD from 0.95 to 10 (if cl != 0)
+            if (cl !== 0) {
+                speedPoints = [];
+                coeffPoints = [];
+                
+                for (let cd = 0.95; cd <= 10; cd += 0.1) {
+                    coeffPoints.push({ cl, cd });
+                    
+                    const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                    const vxs = mpsToMph(vxsMps);
+                    const vys = mpsToMph(vysMps);
+                    speedPoints.push({ vxs, vys });
+                }
+                
+                this.allLines.push({
+                    speedPoints,
+                    coeffPoints,
+                    color: '#9b59b6',
+                    type: 'coeff-horizontal',
+                    label: `CL=${cl.toFixed(1)}`,
+                    labelValue: cl
+                });
+                
+                // Extended segments: CD from -10 to -0.95
+                speedPoints = [];
+                coeffPoints = [];
+                
+                for (let cd = -10; cd <= -0.95; cd += 0.1) {
+                    coeffPoints.push({ cl, cd });
+                    
+                    const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                    const vxs = mpsToMph(vxsMps);
+                    const vys = mpsToMph(vysMps);
+                    speedPoints.push({ vxs, vys });
+                }
+                
+                this.allLines.push({
+                    speedPoints,
+                    coeffPoints,
+                    color: '#9b59b6',
+                    type: 'coeff-horizontal',
+                    label: `CL=${cl.toFixed(1)}`,
+                    labelValue: cl
+                });
+            }
         }
         
         // Coefficient vertical lines (constant CD)
         for (let cd = -1.0; cd <= 1.0; cd += 0.2) {
-            const speedPoints = [];
-            const coeffPoints = [];
+            // Main segment: CL from -1 to 1
+            let speedPoints = [];
+            let coeffPoints = [];
             
             for (let cl = -1.0; cl <= 1.0; cl += 0.05) {
                 coeffPoints.push({ cl, cd });
@@ -268,9 +316,335 @@ export class SimpleChart {
                 label: `CD=${cd.toFixed(1)}`,
                 labelValue: cd
             });
+            
+            // Extended segments: CL from 0.95 to 10 (if cd != 0)
+            if (cd !== 0) {
+                speedPoints = [];
+                coeffPoints = [];
+                
+                for (let cl = 0.95; cl <= 10; cl += 0.1) {
+                    coeffPoints.push({ cl, cd });
+                    
+                    const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                    const vxs = mpsToMph(vxsMps);
+                    const vys = mpsToMph(vysMps);
+                    speedPoints.push({ vxs, vys });
+                }
+                
+                this.allLines.push({
+                    speedPoints,
+                    coeffPoints,
+                    color: '#27ae60',
+                    type: 'coeff-vertical',
+                    label: `CD=${cd.toFixed(1)}`,
+                    labelValue: cd
+                });
+                
+                // Extended segments: CL from -10 to -0.95
+                speedPoints = [];
+                coeffPoints = [];
+                
+                for (let cl = -10; cl <= -0.95; cl += 0.1) {
+                    coeffPoints.push({ cl, cd });
+                    
+                    const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                    const vxs = mpsToMph(vxsMps);
+                    const vys = mpsToMph(vysMps);
+                    speedPoints.push({ vxs, vys });
+                }
+                
+                this.allLines.push({
+                    speedPoints,
+                    coeffPoints,
+                    color: '#27ae60',
+                    type: 'coeff-vertical',
+                    label: `CD=${cd.toFixed(1)}`,
+                    labelValue: cd
+                });
+            }
         }
         
-        // Glide ratio lines (through origin in speed space)
+        // Inner grid for canopy flight - extended coefficient range
+        // Coefficient horizontal lines (constant CL) from 1 to 10
+        for (let cl = 1; cl <= 10; cl += 1) {
+            // Quadrant 1: Positive CL, positive CD
+            let speedPoints = [];
+            let coeffPoints = [];
+            
+            for (let cd = 1; cd <= 10; cd += 0.1) {
+                coeffPoints.push({ cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#9b59b6',
+                type: 'coeff-horizontal',
+                label: `CL=${cl.toFixed(0)}`,
+                labelValue: cl
+            });
+            
+            // Quadrant 2: Positive CL, negative CD
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cd = -10; cd <= -1; cd += 0.1) {
+                coeffPoints.push({ cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#9b59b6',
+                type: 'coeff-horizontal',
+                label: `CL=${cl.toFixed(0)}`,
+                labelValue: cl
+            });
+            
+            // Quadrant 3: Negative CL, negative CD
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cd = -10; cd <= -1; cd += 0.1) {
+                coeffPoints.push({ cl: -cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(-cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#9b59b6',
+                type: 'coeff-horizontal',
+                label: `CL=${(-cl).toFixed(0)}`,
+                labelValue: -cl
+            });
+            
+            // Quadrant 4: Negative CL, positive CD
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cd = 1; cd <= 10; cd += 0.1) {
+                coeffPoints.push({ cl: -cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(-cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#9b59b6',
+                type: 'coeff-horizontal',
+                label: `CL=${(-cl).toFixed(0)}`,
+                labelValue: -cl
+            });
+        }
+        
+        // Coefficient vertical lines (constant CD) from 1 to 10
+        for (let cd = 1; cd <= 10; cd += 1) {
+            // Quadrant 1: Positive CD, positive CL
+            let speedPoints = [];
+            let coeffPoints = [];
+            
+            for (let cl = 1; cl <= 10; cl += 0.1) {
+                coeffPoints.push({ cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#27ae60',
+                type: 'coeff-vertical',
+                label: `CD=${cd.toFixed(0)}`,
+                labelValue: cd
+            });
+            
+            // Quadrant 2: Positive CD, negative CL
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cl = -10; cl <= -1; cl += 0.1) {
+                coeffPoints.push({ cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#27ae60',
+                type: 'coeff-vertical',
+                label: `CD=${cd.toFixed(0)}`,
+                labelValue: cd
+            });
+            
+            // Quadrant 3: Negative CD, negative CL
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cl = -10; cl <= -1; cl += 0.1) {
+                coeffPoints.push({ cl, cd: -cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, -cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#27ae60',
+                type: 'coeff-vertical',
+                label: `CD=${(-cd).toFixed(0)}`,
+                labelValue: -cd
+            });
+            
+            // Quadrant 4: Negative CD, positive CL
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cl = 1; cl <= 10; cl += 0.1) {
+                coeffPoints.push({ cl, cd: -cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, -cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#27ae60',
+                type: 'coeff-vertical',
+                label: `CD=${(-cd).toFixed(0)}`,
+                labelValue: -cd
+            });
+        }
+        
+        // Fill in the connecting segments for inner grid lines
+        // These connect the inner grid through the -1 to 1 region
+        
+        // For CL lines from 1-10, add segments where CD goes from -1 to 1
+        for (let cl = 1; cl <= 10; cl += 1) {
+            // Positive CL, CD from -1 to 1
+            let speedPoints = [];
+            let coeffPoints = [];
+            
+            for (let cd = -1; cd <= 1; cd += 0.05) {
+                coeffPoints.push({ cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#9b59b6',
+                type: 'coeff-horizontal',
+                label: `CL=${cl.toFixed(0)}`,
+                labelValue: cl
+            });
+            
+            // Negative CL, CD from -1 to 1
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cd = -1; cd <= 1; cd += 0.05) {
+                coeffPoints.push({ cl: -cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(-cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#9b59b6',
+                type: 'coeff-horizontal',
+                label: `CL=${(-cl).toFixed(0)}`,
+                labelValue: -cl
+            });
+        }
+        
+        // For CD lines from 1-10, add segments where CL goes from -1 to 1
+        for (let cd = 1; cd <= 10; cd += 1) {
+            // Positive CD, CL from -1 to 1
+            let speedPoints = [];
+            let coeffPoints = [];
+            
+            for (let cl = -1; cl <= 1; cl += 0.05) {
+                coeffPoints.push({ cl, cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#27ae60',
+                type: 'coeff-vertical',
+                label: `CD=${cd.toFixed(0)}`,
+                labelValue: cd
+            });
+            
+            // Negative CD, CL from -1 to 1
+            speedPoints = [];
+            coeffPoints = [];
+            
+            for (let cl = -1; cl <= 1; cl += 0.05) {
+                coeffPoints.push({ cl, cd: -cd });
+                
+                const { vxs: vxsMps, vys: vysMps } = coeffToSS(cl, -cd, this.s, this.m, this.rho);
+                const vxs = mpsToMph(vxsMps);
+                const vys = mpsToMph(vysMps);
+                speedPoints.push({ vxs, vys });
+            }
+            
+            this.allLines.push({
+                speedPoints,
+                coeffPoints,
+                color: '#27ae60',
+                type: 'coeff-vertical',
+                label: `CD=${(-cd).toFixed(0)}`,
+                labelValue: -cd
+            });
+        }
+        
+        // Glide ratio lines (through origin in all four quadrants)
         const glideRatios = [
             { ratio: 1, color: '#e74c3c', label: '1:1 glide' },  // Red
             { ratio: 2, color: '#f39c12', label: '2:1 glide' },  // Orange/Yellow
@@ -278,26 +652,88 @@ export class SimpleChart {
         ];
         
         glideRatios.forEach(({ ratio, color, label }) => {
-            const speedPoints = [];
-            const coeffPoints = [];
+            // Create four lines for four quadrants
+            // Each line goes from center outward
             
-            // Glide line: VXS / |VYS| = ratio
-            // So VYS = -VXS/ratio (negative because descent is positive VYS)
-            // Draw from VXS = -150 to VXS = +150
-            for (let vxs = -150; vxs <= 150; vxs += 5) {
-                const vys = -vxs / ratio; // Negative sign: positive VYS is descent
-                speedPoints.push({ vxs, vys });
-                
-                // Convert to coefficient space
+            // Quadrant 1: +VXS, +VYS (climbing right)
+            const speedPoints1 = [];
+            const coeffPoints1 = [];
+            for (let vxs = 0; vxs <= 150; vxs += 5) {
+                const vys = vxs / ratio;
+                speedPoints1.push({ vxs, vys });
                 const vxsMps = mphToMps(vxs);
                 const vysMps = mphToMps(vys);
                 const { cl, cd } = ssToCoeff(vxsMps, vysMps, this.s, this.m, this.rho);
-                coeffPoints.push({ cl, cd });
+                coeffPoints1.push({ cl, cd });
             }
             
+            // Quadrant 2: -VXS, +VYS (climbing left)
+            const speedPoints2 = [];
+            const coeffPoints2 = [];
+            for (let vxs = 0; vxs >= -150; vxs -= 5) {
+                const vys = -vxs / ratio;
+                speedPoints2.push({ vxs, vys });
+                const vxsMps = mphToMps(vxs);
+                const vysMps = mphToMps(vys);
+                const { cl, cd } = ssToCoeff(vxsMps, vysMps, this.s, this.m, this.rho);
+                coeffPoints2.push({ cl, cd });
+            }
+            
+            // Quadrant 3: -VXS, -VYS (descending left)
+            const speedPoints3 = [];
+            const coeffPoints3 = [];
+            for (let vxs = 0; vxs >= -150; vxs -= 5) {
+                const vys = vxs / ratio;
+                speedPoints3.push({ vxs, vys });
+                const vxsMps = mphToMps(vxs);
+                const vysMps = mphToMps(vys);
+                const { cl, cd } = ssToCoeff(vxsMps, vysMps, this.s, this.m, this.rho);
+                coeffPoints3.push({ cl, cd });
+            }
+            
+            // Quadrant 4: +VXS, -VYS (descending right) - original quadrant
+            const speedPoints4 = [];
+            const coeffPoints4 = [];
+            for (let vxs = 0; vxs <= 150; vxs += 5) {
+                const vys = -vxs / ratio;
+                speedPoints4.push({ vxs, vys });
+                const vxsMps = mphToMps(vxs);
+                const vysMps = mphToMps(vys);
+                const { cl, cd } = ssToCoeff(vxsMps, vysMps, this.s, this.m, this.rho);
+                coeffPoints4.push({ cl, cd });
+            }
+            
+            // Add all four quadrant lines
             this.allLines.push({
-                speedPoints,
-                coeffPoints,
+                speedPoints: speedPoints1,
+                coeffPoints: coeffPoints1,
+                color: color,
+                type: 'glide',
+                label: label,
+                labelValue: ratio
+            });
+            
+            this.allLines.push({
+                speedPoints: speedPoints2,
+                coeffPoints: coeffPoints2,
+                color: color,
+                type: 'glide',
+                label: label,
+                labelValue: ratio
+            });
+            
+            this.allLines.push({
+                speedPoints: speedPoints3,
+                coeffPoints: coeffPoints3,
+                color: color,
+                type: 'glide',
+                label: label,
+                labelValue: ratio
+            });
+            
+            this.allLines.push({
+                speedPoints: speedPoints4,
+                coeffPoints: coeffPoints4,
                 color: color,
                 type: 'glide',
                 label: label,
@@ -342,6 +778,48 @@ export class SimpleChart {
             const { speedPoints, coeffPoints, color, type } = line;
             const label = this.getLineLabel(line);
             
+            // Determine if we should show this label
+            // For inner grid (CL/CD from 1-10), only show labels at 1, 5 and 10
+            let showLabel = true;
+            const absValue = Math.abs(line.labelValue);
+            if (type === 'coeff-horizontal' || type === 'coeff-vertical') {
+                if (absValue >= 1 && absValue <= 10) {
+                    // Inner grid: only show labels for 1, 5 and 10
+                    showLabel = (absValue === 1 || absValue === 5 || absValue === 10);
+                    
+                    // Further filter: only show label on one segment per value
+                    // For horizontal lines (constant CL), only label the segment with positive CD values > 1
+                    // For vertical lines (constant CD), only label the segment with positive CL values > 1
+                    if (showLabel && type === 'coeff-horizontal') {
+                        // Check if this segment has CD > 1
+                        const hasPosCD = coeffPoints.some(cp => cp.cd > 1);
+                        showLabel = hasPosCD;
+                    } else if (showLabel && type === 'coeff-vertical') {
+                        // Check if this segment has CL > 1
+                        const hasPosCD = coeffPoints.some(cp => cp.cl > 1);
+                        showLabel = hasPosCD;
+                    }
+                } else if (absValue > 0 && absValue <= 1) {
+                    // Outer grid: also filter to only show label on main segment (CD or CL in -1 to 1 range)
+                    // For horizontal lines (constant CL), only label the segment with CD in [-1, 1]
+                    // For vertical lines (constant CD), only label the segment with CL in [-1, 1]
+                    if (type === 'coeff-horizontal') {
+                        // Check if this segment has CD values in the -1 to 1 range
+                        const inMainRange = coeffPoints.some(cp => Math.abs(cp.cd) <= 1);
+                        const inExtendedRange = coeffPoints.some(cp => Math.abs(cp.cd) > 1);
+                        // Only show label if this is the main segment (not extended)
+                        showLabel = inMainRange && !inExtendedRange;
+                    } else if (type === 'coeff-vertical') {
+                        // Check if this segment has CL values in the -1 to 1 range
+                        const inMainRange = coeffPoints.some(cp => Math.abs(cp.cl) <= 1);
+                        const inExtendedRange = coeffPoints.some(cp => Math.abs(cp.cl) > 1);
+                        // Only show label if this is the main segment (not extended)
+                        showLabel = inMainRange && !inExtendedRange;
+                    }
+                }
+                // absValue === 0 will show (default showLabel = true)
+            }
+            
             this.ctx.strokeStyle = color;
             this.ctx.lineWidth = 2;
             this.ctx.globalAlpha = 0.6;
@@ -354,11 +832,52 @@ export class SimpleChart {
             // Determine label position to avoid overlaps
             // Speed lines (VXS/VYS): use 1/3 point
             // Coeff lines (CL/CD): use 2/3 point
+            // Glide lines: use 0.85 in speed view (far out), 0.33 in coeff view
+            // Inner grid (1, 5, 10): place at crest of ellipse (on axes)
             let labelFraction;
             if (type === 'horizontal' || type === 'vertical') {
                 labelFraction = 0.33; // Speed lines at 1/3
+            } else if (type === 'glide') {
+                // In speed view, place labels far out; in coeff view, use closer in
+                labelFraction = this.animationProgress > 0.5 ? 0.33 : 0.85;
             } else {
-                labelFraction = 0.67; // Coefficient lines at 2/3
+                // Coefficient lines
+                const absValue = Math.abs(line.labelValue);
+                
+                if (absValue >= 1 && absValue <= 10) {
+                    // Inner grid: find the crest of the ellipse (where other coefficient is closest to 0)
+                    let minDistance = Infinity;
+                    let bestIndex = 0;
+                    
+                    for (let i = 0; i < coeffPoints.length; i++) {
+                        const cp = coeffPoints[i];
+                        let distanceToAxis;
+                        
+                        if (type === 'coeff-horizontal') {
+                            // CL line: find where CD is closest to 0 (crest on X-axis)
+                            distanceToAxis = -Math.abs(cp.cd);
+                        } else {
+                            // CD line: find where CL is closest to 0 (crest on Y-axis)
+                            distanceToAxis = -Math.abs(cp.cl);
+                        }
+                        
+                        // For value = 1 or -1, only consider points very close to the axis (< 0.1)
+                        // to ensure we label at the axis crossing, not elsewhere
+                        if (absValue === 1 && distanceToAxis > 0.1) {
+                            continue;
+                        }
+                        
+                        if (distanceToAxis < minDistance) {
+                            minDistance = distanceToAxis;
+                            bestIndex = i;
+                        }
+                    }
+                    
+                    labelFraction = bestIndex / numPoints;
+                } else {
+                    // Outer grid: use 0.85
+                    labelFraction = 0.85;
+                }
             }
             const labelIndex = Math.floor(numPoints * labelFraction);
             
@@ -379,9 +898,46 @@ export class SimpleChart {
                 const x2 = cx - (coeff.cd / range) * (this.canvas.width / 2);
                 const y2 = cy - (coeff.cl / range) * (this.canvas.height / 2);
                 
+                // Create interpolation targets (may be mirrored)
+                let x2_interp = x2;
+                let y2_interp = y2;
+                
+                // Apply mirrored target logic to force interpolation through origin
+                // Check if point needs to cross origin (different quadrants)
+                const startQuadX = x1 - cx; // relative to center
+                const startQuadY = y1 - cy;
+                const targetQuadX = x2 - cx;
+                const targetQuadY = y2 - cy;
+                
+                // Determine if we should use mirrored target
+                // Mirror if starting and target are in different quadrants
+                const needsMirror = (startQuadX * targetQuadX < 0) || (startQuadY * targetQuadY < 0);
+                
+                if (needsMirror) {
+                    // Calculate mirrored target (swap x and y offsets from center)
+                    const x2_mirror = cx + (y2 - cy);
+                    const y2_mirror = cy + (x2 - cx);
+                    
+                    // Calculate current position if we were going to the mirrored target
+                    const x_test = x1 + (x2_mirror - x1) * this.animationProgress;
+                    const y_test = y1 + (y2_mirror - y1) * this.animationProgress;
+                    
+                    // Check if we've crossed to the opposite side of origin
+                    const currentQuadX = x_test - cx;
+                    const currentQuadY = y_test - cy;
+                    
+                    // If we're still on the same side as we started, use mirrored target
+                    const hasCrossed = (startQuadX * currentQuadX < 0) || (startQuadY * currentQuadY < 0);
+                    
+                    if (!hasCrossed) {
+                        x2_interp = x2_mirror;
+                        y2_interp = y2_mirror;
+                    }
+                }
+                
                 // Interpolate between the two
-                const x = x1 + (x2 - x1) * this.animationProgress;
-                const y = y1 + (y2 - y1) * this.animationProgress;
+                const x = x1 + (x2_interp - x1) * this.animationProgress;
+                const y = y1 + (y2_interp - y1) * this.animationProgress;
                 
                 // Only draw if point is within reasonable bounds (with margin for curves)
                 const margin = this.canvas.width * 0.5; // 50% margin
@@ -451,8 +1007,8 @@ export class SimpleChart {
             
             this.ctx.stroke();
             
-            // Store label position
-            if (labelX !== undefined && labelY !== undefined) {
+            // Store label position only if we should show this label
+            if (showLabel && labelX !== undefined && labelY !== undefined) {
                 labelPositions.push({ x: labelX, y: labelY, label, color, type });
             }
         });
@@ -498,7 +1054,7 @@ export class SimpleChart {
             this.ctx.font = '12px Arial';
             const xLabel = this.coeffType === 'k' ? 'KD' : 'CD';
             const yLabel = this.coeffType === 'k' ? 'KL' : 'CL';
-            this.ctx.fillText(`X-axis: ${xLabel} (drag coefficient, -1 LEFT to +1 RIGHT)`, 150, 45);
+            this.ctx.fillText(`X-axis: ${xLabel} (drag coefficient, +1 LEFT to -1 RIGHT)`, 150, 45);
             this.ctx.fillText(`Y-axis: ${yLabel} (lift coefficient, -1 to +1)`, 150, 65);
             this.ctx.fillText('Speed grid lines are curved in this view', 150, 85);
         } else {
