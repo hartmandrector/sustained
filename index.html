@@ -39,6 +39,23 @@
             
             <div class="control-group" id="customization">
                 <details>
+                    <summary><strong>Axis Configuration</strong></summary>
+                    <label>Preset:
+                        <select id="axisPreset">
+                            <option value="default">Default (Standard)</option>
+                            <option value="speedSwapped">Speed Axes Swapped</option>
+                            <option value="coeffSwapped">Coefficient Axes Swapped</option>
+                            <option value="bothSwapped">Both Axes Swapped</option>
+                            <option value="standard">Standard Orientation (no reversals)</option>
+                            <option value="polar">Polar Style (traditional)</option>
+                        </select>
+                    </label>
+                    <div class="axis-info" id="axisInfo">
+                        <small>VXS→X, VYS→Y(rev) | CD→X(rev), CL→Y</small>
+                    </div>
+                </details>
+                
+                <details>
                     <summary><strong>Dynamic Zoom</strong></summary>
                     <label><input type="checkbox" id="quadrantZoom"> Quadrant Zoom</label>
                 </details>
@@ -103,6 +120,7 @@
     
     <script type="module" src="utilities.js"></script>
     <script type="module" src="interpolation.js"></script>
+    <script type="module" src="axisMapping.js"></script>
     <script type="module" src="dataLoader.js"></script>
     <script type="module" src="chart-simple.js"></script>
     <script type="module" src="app.js"></script>

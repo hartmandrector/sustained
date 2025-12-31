@@ -1,5 +1,6 @@
 import { SimpleChart } from './chart-simple.js';
 import { DataSetManager } from './dataLoader.js';
+import { AXIS_PRESETS } from './axisMapping.js';
 
 // Application state
 let chart;
@@ -208,6 +209,24 @@ function setupControls() {
             if (chart) {
                 chart.quadrantZoom = e.target.checked;
                 chart.render();
+            }
+        });
+    }
+    
+    // Axis preset dropdown handler
+    const axisPresetSelect = document.getElementById('axisPreset');
+    const axisInfoDiv = document.getElementById('axisInfo');
+    
+    if (axisPresetSelect) {
+        axisPresetSelect.addEventListener('change', (e) => {
+            const presetName = e.target.value;
+            if (chart && chart.setAxisPreset) {
+                chart.setAxisPreset(presetName);
+                
+                // Update info text
+                if (axisInfoDiv && AXIS_PRESETS[presetName]) {
+                    axisInfoDiv.innerHTML = `<small>${AXIS_PRESETS[presetName].description}</small>`;
+                }
             }
         });
     }

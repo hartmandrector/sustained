@@ -1,5 +1,6 @@
 import { coeffToSS, ssToCoeff, mphToMps, mpsToMph } from './utilities.js';
 import { easeInOutExpo, easeZoom } from './interpolation.js';
+import { AxisMapping, AXIS_PRESETS } from './axisMapping.js';
 
 export class SimpleChart {
     constructor(canvas) {
@@ -15,6 +16,9 @@ export class SimpleChart {
         this.s = 2.0;
         this.m = 70.0;
         this.rho = 1.0;
+        
+        // Axis mapping configuration
+        this.axisMapping = new AxisMapping('default');
         
         // View state
         this.currentView = 'speed'; // 'speed' or 'coeff'
@@ -133,6 +137,68 @@ export class SimpleChart {
     }
     
     /**
+     * Set axis mapping preset
+     */
+    setAxisPreset(presetName) {
+        this.axisMapping.setPreset(presetName);
+        this.generateGrid();
+        this.render();
+    }
+    
+    /**
+     * Get current axis preset name
+     */
+    getAxisPreset() {
+        return this.axisMapping.getPresetName();
+    }
+    
+    // ========== Coordinate Calculation Helpers ==========
+    
+    /**
+     * Calculate X coordinate in speed space using axis mapping
+     */
+    calcSpeedX(speedPoint) {
+        const cx = this.canvas.width / 2;
+        const halfWidth = this.canvas.width / 2;
+        return this.axisMapping.calcSpeedX(speedPoint, cx, halfWidth, 150);
+    }
+    
+    /**
+     * Calculate Y coordinate in speed space using axis mapping
+     */
+    calcSpeedY(speedPoint) {
+        const cy = this.canvas.height / 2;
+        const halfHeight = this.canvas.height / 2;
+        return this.axisMapping.calcSpeedY(speedPoint, cy, halfHeight, 150);
+    }
+    
+    /**
+     * Calculate X coordinate in coefficient space using axis mapping
+     */
+    calcCoeffX(coeffPoint) {
+        const cx = this.canvas.width / 2;
+        const halfWidth = this.canvas.width / 2;
+        const coeff = this.getCoeffValues(coeffPoint);
+        const range = this.getCoeffRange();
+        // Build a point object with the converted coefficient values
+        const point = { cd: coeff.cd, cl: coeff.cl };
+        return this.axisMapping.calcCoeffX(point, cx, halfWidth, range, 'c');
+    }
+    
+    /**
+     * Calculate Y coordinate in coefficient space using axis mapping
+     */
+    calcCoeffY(coeffPoint) {
+        const cy = this.canvas.height / 2;
+        const halfHeight = this.canvas.height / 2;
+        const coeff = this.getCoeffValues(coeffPoint);
+        const range = this.getCoeffRange();
+        // Build a point object with the converted coefficient values
+        const point = { cd: coeff.cd, cl: coeff.cl };
+        return this.axisMapping.calcCoeffY(point, cy, halfHeight, range, 'c');
+    }
+    
+    /**
      * Convert coefficient point to K or C values based on coeffType
      */
     getCoeffValues(cp) {
@@ -164,18 +230,30 @@ export class SimpleChart {
     }
     
     /**
-     * Get label text for a line based on current coeffType
+     * Get label text for a line based on current coeffType and axis mapping
      */
     getLineLabel(line) {
-        // For speed lines and glide lines, label doesn't change
-        if (line.type === 'horizontal' || line.type === 'vertical' || line.type === 'glide') {
+        // For inner speed lines, use axis mapping labels
+        if (line.type === 'horizontal-inner' || line.type === 'horizontal') {
+            const label = this.axisMapping.getSpeedLabel('yAxis');
+            return `${label}=${line.labelValue}`;
+        }
+        if (line.type === 'vertical-inner' || line.type === 'vertical') {
+            const label = this.axisMapping.getSpeedLabel('xAxis');
+            return `${label}=${line.labelValue}`;
+        }
+        
+        // For glide lines, return as-is
+        if (line.type === 'glide') {
             return line.label;
         }
         
-        // For coefficient lines, convert if in K mode
+        // For coefficient lines, use axis mapping and convert if in K mode
         if (line.type === 'coeff-horizontal') {
-            // This is a CL line
+            // Horizontal lines have constant Y-axis value
             const value = line.labelValue;
+            const baseLabel = this.axisMapping.getCoeffLabel('yAxis', this.coeffType);
+            
             if (this.coeffType === 'k') {
                 const k = 0.5 * this.rho * this.s / this.m;
                 const g = 9.8;
@@ -184,16 +262,18 @@ export class SimpleChart {
                 const milliValue = kValue * 1000;
                 if (Math.abs(milliValue) < 0.1 && milliValue !== 0) {
                     const microValue = kValue * 1000000;
-                    return `KL=${microValue.toFixed(1)}μ`;
+                    return `${baseLabel}=${microValue.toFixed(1)}μ`;
                 }
-                return `KL=${milliValue.toFixed(2)}m`;
+                return `${baseLabel}=${milliValue.toFixed(2)}m`;
             }
-            return `CL=${value.toFixed(1)}`;
+            return `${baseLabel}=${value.toFixed(1)}`;
         }
         
         if (line.type === 'coeff-vertical') {
-            // This is a CD line
+            // Vertical lines have constant X-axis value
             const value = line.labelValue;
+            const baseLabel = this.axisMapping.getCoeffLabel('xAxis', this.coeffType);
+            
             if (this.coeffType === 'k') {
                 const k = 0.5 * this.rho * this.s / this.m;
                 const g = 9.8;
@@ -202,11 +282,11 @@ export class SimpleChart {
                 const milliValue = kValue * 1000;
                 if (Math.abs(milliValue) < 0.1 && milliValue !== 0) {
                     const microValue = kValue * 1000000;
-                    return `KD=${microValue.toFixed(1)}μ`;
+                    return `${baseLabel}=${microValue.toFixed(1)}μ`;
                 }
-                return `KD=${milliValue.toFixed(2)}m`;
+                return `${baseLabel}=${milliValue.toFixed(2)}m`;
             }
-            return `CD=${value.toFixed(1)}`;
+            return `${baseLabel}=${value.toFixed(1)}`;
         }
         
         return line.label;
@@ -215,7 +295,11 @@ export class SimpleChart {
     generateGrid() {
         this.allLines = [];
         
-        // Horizontal lines (constant VYS)
+        // Get axis labels for speed grid
+        const speedYLabel = this.axisMapping.getSpeedLabel('yAxis');
+        const speedXLabel = this.axisMapping.getSpeedLabel('xAxis');
+        
+        // Horizontal lines (constant Y-axis value in speed space)
         for (let vys = -150; vys <= 150; vys += 30) {
             const speedPoints = [];
             const coeffPoints = [];
@@ -234,12 +318,12 @@ export class SimpleChart {
                 coeffPoints, 
                 color: this.colors.vertical, 
                 type: 'horizontal',
-                label: `VYS=${vys}`,
+                label: `${speedYLabel}=${vys}`,
                 labelValue: vys
             });
         }
         
-        // Vertical lines (constant VXS)
+        // Vertical lines (constant X-axis value in speed space)
         for (let vxs = -150; vxs <= 150; vxs += 30) {
             const speedPoints = [];
             const coeffPoints = [];
@@ -258,12 +342,12 @@ export class SimpleChart {
                 coeffPoints, 
                 color: this.colors.horizontal, 
                 type: 'vertical',
-                label: `VXS=${vxs}`,
+                label: `${speedXLabel}=${vxs}`,
                 labelValue: vxs
             });
         }
         
-        // Inner horizontal speed lines (constant VYS, -30 to 30)
+        // Inner horizontal speed lines (constant Y-axis value, -30 to 30)
         for (let vys of [-30, -20, -10, 10, 20, 30]) {
             const speedPoints = [];
             const coeffPoints = [];
@@ -282,12 +366,12 @@ export class SimpleChart {
                 coeffPoints, 
                 color: this.colors.vertical, 
                 type: 'horizontal-inner',
-                label: `VYS=${vys}`,
+                label: `${speedYLabel}=${vys}`,
                 labelValue: vys
             });
         }
         
-        // Inner vertical speed lines (constant VXS, -30 to 30)
+        // Inner vertical speed lines (constant X-axis value, -30 to 30)
         for (let vxs of [-30, -20, -10, 10, 20, 30]) {
             const speedPoints = [];
             const coeffPoints = [];
@@ -306,12 +390,16 @@ export class SimpleChart {
                 coeffPoints, 
                 color: this.colors.horizontal, 
                 type: 'vertical-inner',
-                label: `VXS=${vxs}`,
+                label: `${speedXLabel}=${vxs}`,
                 labelValue: vxs
             });
         }
         
-        // Coefficient horizontal lines (constant CL)
+        // Get axis labels for coefficient grid
+        const coeffYLabel = this.axisMapping.getCoeffLabel('yAxis', 'c');
+        const coeffXLabel = this.axisMapping.getCoeffLabel('xAxis', 'c');
+        
+        // Coefficient horizontal lines (constant Y-axis value in coeff space)
         for (let cl = -1.0; cl <= 1.0; cl += 0.2) {
             // Main segment: CD from -1 to 1
             let speedPoints = [];
@@ -332,7 +420,7 @@ export class SimpleChart {
                 coeffPoints,
                 color: this.colors.lift, // Purple for CL lines
                 type: 'coeff-horizontal',
-                label: `CL=${cl.toFixed(1)}`,
+                label: `${coeffYLabel}=${cl.toFixed(1)}`,
                 labelValue: cl
             });
             
@@ -936,17 +1024,27 @@ export class SimpleChart {
         
         if (useSpeedView) {
             // Use speed data bounds
+            const xValueName = this.axisMapping.getSpeedValueName('xAxis');
+            const yValueName = this.axisMapping.getSpeedValueName('yAxis');
+            
             for (const dataset of visibleDatasets) {
                 for (const point of dataset.speedData) {
-                    if (point.vxs > maxX) maxX = point.vxs;
-                    if (point.vxs < minX) minX = point.vxs;
-                    if (point.vys > maxY) maxY = point.vys;
-                    if (point.vys < minY) minY = point.vys;
+                    const xVal = point[xValueName];
+                    const yVal = point[yValueName];
+                    if (xVal > maxX) maxX = xVal;
+                    if (xVal < minX) minX = xVal;
+                    if (yVal > maxY) maxY = yVal;
+                    if (yVal < minY) minY = yVal;
                 }
             }
             
-            // Speed view focuses on bottom-right quadrant (positive VXS, positive VYS)
-            // Ensure we include the origin and positive values
+            // Determine target quadrant based on axis reversals
+            // Reversed axis: show positive values (offset negative)
+            // Non-reversed axis: show positive values (offset negative)
+            const xReversed = this.axisMapping.isSpeedReversed('xAxis');
+            const yReversed = this.axisMapping.isSpeedReversed('yAxis');
+            
+            // Ensure we include the origin
             minX = Math.min(minX, 0);
             minY = Math.min(minY, 0);
             maxX = Math.max(maxX, 0);
@@ -978,18 +1076,26 @@ export class SimpleChart {
         } else {
             // Use coefficient data bounds
             const range = this.getCoeffRange();
+            const xValueName = this.axisMapping.getCoeffValueName('xAxis');
+            const yValueName = this.axisMapping.getCoeffValueName('yAxis');
             
             for (const dataset of visibleDatasets) {
                 for (const point of dataset.coeffData) {
                     const coeff = this.getCoeffValues(point);
-                    if (coeff.cd > maxX) maxX = coeff.cd;
-                    if (coeff.cd < minX) minX = coeff.cd;
-                    if (coeff.cl > maxY) maxY = coeff.cl;
-                    if (coeff.cl < minY) minY = coeff.cl;
+                    // Get the mapped value (cd or cl based on axis config)
+                    const xVal = coeff[xValueName.slice(1) === 'd' ? 'cd' : 'cl'];
+                    const yVal = coeff[yValueName.slice(1) === 'd' ? 'cd' : 'cl'];
+                    if (xVal > maxX) maxX = xVal;
+                    if (xVal < minX) minX = xVal;
+                    if (yVal > maxY) maxY = yVal;
+                    if (yVal < minY) minY = yVal;
                 }
             }
             
-            // Coeff view focuses on upper-left quadrant (negative CD, positive CL)
+            // Determine target quadrant based on axis reversals
+            const xReversed = this.axisMapping.isCoeffReversed('xAxis');
+            const yReversed = this.axisMapping.isCoeffReversed('yAxis');
+            
             // Ensure we include the origin
             minX = Math.min(minX, 0);
             maxX = Math.max(maxX, 0);
@@ -1185,18 +1291,13 @@ export class SimpleChart {
                 const sp = speedPoints[i];
                 const cp = coeffPoints[i];
                 
-                // Calculate speed space position (VXS and VYS both -150 to +150)
-                // Speed view: flip Y-axis so negative VYS is at top, positive at bottom
-                const x1 = cx + (sp.vxs / 150) * (this.canvas.width / 2);
-                const y1 = cy + (sp.vys / 150) * (this.canvas.height / 2);
+                // Calculate speed space position using axis mapping
+                const x1 = this.calcSpeedX(sp);
+                const y1 = this.calcSpeedY(sp);
                 
-                // Calculate coeff space position
-                // Get effective coefficient values (K or C based on coeffType)
-                const coeff = this.getCoeffValues(cp);
-                const range = this.getCoeffRange();
-                // Coeff view: flip X-axis so positive CD (drag) is on the left
-                const x2 = cx - (coeff.cd / range) * (this.canvas.width / 2);
-                const y2 = cy - (coeff.cl / range) * (this.canvas.height / 2);
+                // Calculate coeff space position using axis mapping
+                const x2 = this.calcCoeffX(cp);
+                const y2 = this.calcCoeffY(cp);
                 
                 // Create interpolation targets (may be mirrored)
                 let x2_interp = x2;
@@ -1264,21 +1365,19 @@ export class SimpleChart {
                         if (i > 0 && i < numPoints - 1) {
                             const sp_prev = speedPoints[Math.max(0, i - 3)];
                             const cp_prev = coeffPoints[Math.max(0, i - 3)];
-                            const x1_prev = cx + (sp_prev.vxs / 150) * (this.canvas.width / 2);
-                            const y1_prev = cy + (sp_prev.vys / 150) * (this.canvas.height / 2);
-                            const coeff_prev = this.getCoeffValues(cp_prev);
-                            const x2_prev = cx - (coeff_prev.cd / range) * (this.canvas.width / 2);
-                            const y2_prev = cy - (coeff_prev.cl / range) * (this.canvas.height / 2);
+                            const x1_prev = this.calcSpeedX(sp_prev);
+                            const y1_prev = this.calcSpeedY(sp_prev);
+                            const x2_prev = this.calcCoeffX(cp_prev);
+                            const y2_prev = this.calcCoeffY(cp_prev);
                             const x_prev = x1_prev + (x2_prev - x1_prev) * this.animationProgress;
                             const y_prev = y1_prev + (y2_prev - y1_prev) * this.animationProgress;
                             
                             const sp_next = speedPoints[Math.min(numPoints - 1, i + 3)];
                             const cp_next = coeffPoints[Math.min(numPoints - 1, i + 3)];
-                            const x1_next = cx + (sp_next.vxs / 150) * (this.canvas.width / 2);
-                            const y1_next = cy + (sp_next.vys / 150) * (this.canvas.height / 2);
-                            const coeff_next = this.getCoeffValues(cp_next);
-                            const x2_next = cx - (coeff_next.cd / range) * (this.canvas.width / 2);
-                            const y2_next = cy - (coeff_next.cl / range) * (this.canvas.height / 2);
+                            const x1_next = this.calcSpeedX(sp_next);
+                            const y1_next = this.calcSpeedY(sp_next);
+                            const x2_next = this.calcCoeffX(cp_next);
+                            const y2_next = this.calcCoeffY(cp_next);
                             const x_next = x1_next + (x2_next - x1_next) * this.animationProgress;
                             const y_next = y1_next + (y2_next - y1_next) * this.animationProgress;
                             
@@ -1382,14 +1481,13 @@ export class SimpleChart {
                 const speedPoint = dataset.speedData[i];
                 const coeffPoint = dataset.coeffData[i];
                 
-                // Calculate position in speed space
-                const x1 = cx + (speedPoint.vxs / 150) * (this.canvas.width / 2);
-                const y1 = cy + (speedPoint.vys / 150) * (this.canvas.height / 2);
+                // Calculate position in speed space using axis mapping
+                const x1 = this.calcSpeedX(speedPoint);
+                const y1 = this.calcSpeedY(speedPoint);
                 
-                // Calculate position in coefficient space
-                const coeff = this.getCoeffValues(coeffPoint);
-                const x2 = cx - (coeff.cd / range) * (this.canvas.width / 2);
-                const y2 = cy - (coeff.cl / range) * (this.canvas.height / 2);
+                // Calculate position in coefficient space using axis mapping
+                const x2 = this.calcCoeffX(coeffPoint);
+                const y2 = this.calcCoeffY(coeffPoint);
                 
                 // Interpolate between the two coordinate systems
                 const x = x1 + (x2 - x1) * this.animationProgress;
@@ -1413,14 +1511,13 @@ export class SimpleChart {
                 const speedPoint = dataset.speedData[i];
                 const coeffPoint = dataset.coeffData[i];
                 
-                // Calculate position in speed space
-                const x1 = cx + (speedPoint.vxs / 150) * (this.canvas.width / 2);
-                const y1 = cy + (speedPoint.vys / 150) * (this.canvas.height / 2);
+                // Calculate position in speed space using axis mapping
+                const x1 = this.calcSpeedX(speedPoint);
+                const y1 = this.calcSpeedY(speedPoint);
                 
-                // Calculate position in coefficient space
-                const coeff = this.getCoeffValues(coeffPoint);
-                const x2 = cx - (coeff.cd / range) * (this.canvas.width / 2);
-                const y2 = cy - (coeff.cl / range) * (this.canvas.height / 2);
+                // Calculate position in coefficient space using axis mapping
+                const x2 = this.calcCoeffX(coeffPoint);
+                const y2 = this.calcCoeffY(coeffPoint);
                 
                 // Interpolate between the two coordinate systems
                 const x = x1 + (x2 - x1) * this.animationProgress;
@@ -1451,18 +1548,28 @@ export class SimpleChart {
             // Coefficient space labels (coeff grid is straight/rectangular)
             this.ctx.fillText('COEFFICIENT VIEW', legendX, 25);
             this.ctx.font = '12px Arial';
-            const xLabel = this.coeffType === 'k' ? 'KD' : 'CD';
-            const yLabel = this.coeffType === 'k' ? 'KL' : 'CL';
-            this.ctx.fillText(`X-axis: ${xLabel} (drag coefficient, +1 LEFT to -1 RIGHT)`, legendX, 45);
-            this.ctx.fillText(`Y-axis: ${yLabel} (lift coefficient, -1 to +1)`, legendX, 65);
+            
+            // Use axis mapping for dynamic labels
+            const xAxisText = this.axisMapping.getAxisLegendText('coeff', 'xAxis', this.coeffType);
+            const yAxisText = this.axisMapping.getAxisLegendText('coeff', 'yAxis', this.coeffType);
+            
+            this.ctx.fillText(`X-axis: ${xAxisText}`, legendX, 45);
+            this.ctx.fillText(`Y-axis: ${yAxisText}`, legendX, 65);
             this.ctx.fillText('Speed grid lines are curved in this view', legendX, 85);
         } else {
             // Speed space labels (speed grid is straight/rectangular)
             this.ctx.fillText('SPEED VIEW', legendX, 25);
             this.ctx.font = '12px Arial';
-            this.ctx.fillText('X-axis: VXS (horizontal speed, -150 to +150 mph)', legendX, 45);
-            this.ctx.fillText('Y-axis: VYS (vertical speed, -150 to +150 mph)', legendX, 65);
-            this.ctx.fillText('Red = constant VYS | Blue = constant VXS', legendX, 85);
+            
+            // Use axis mapping for dynamic labels
+            const xAxisText = this.axisMapping.getAxisLegendText('speed', 'xAxis');
+            const yAxisText = this.axisMapping.getAxisLegendText('speed', 'yAxis');
+            const yLabel = this.axisMapping.getSpeedLabel('yAxis');
+            const xLabel = this.axisMapping.getSpeedLabel('xAxis');
+            
+            this.ctx.fillText(`X-axis: ${xAxisText}`, legendX, 45);
+            this.ctx.fillText(`Y-axis: ${yAxisText}`, legendX, 65);
+            this.ctx.fillText(`Red = constant ${yLabel} | Blue = constant ${xLabel}`, legendX, 85);
         }
     }
 }

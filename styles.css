@@ -275,3 +275,16 @@ button:disabled {
     background: #c0392b;
     transform: none;
 }
+/* Axis configuration info */
+.axis-info {
+    margin-top: 5px;
+    padding: 5px 8px;
+    background: #e8f4f8;
+    border-radius: 4px;
+    color: #555;
+}
+
+.axis-info small {
+    font-family: monospace;
+    font-size: 11px;
+}
