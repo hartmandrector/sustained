@@ -4,7 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sustained Speeds Chart</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23667eea' width='100' height='100'/><line x1='50' y1='10' x2='50' y2='90' stroke='%23fff' stroke-width='3'/><line x1='10' y1='50' x2='90' y2='50' stroke='%23fff' stroke-width='3'/><circle cx='30' cy='30' r='15' fill='none' stroke='%2327ae60' stroke-width='2'/><circle cx='70' cy='70' r='15' fill='none' stroke='%239b59b6' stroke-width='2'/></svg>">
+    <meta name="description" content="Interactive aerodynamic visualization tool that transforms between speed-space and coefficient-space coordinate systems">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Sustained Speeds Chart">
+    <meta property="og:description" content="Interactive aerodynamic visualization with smooth coordinate system transformations">
+    <meta property="og:image" content="preview.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- Enhanced Favicon - intersecting ellipses representing the dual coordinate system -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23111' width='100' height='100' rx='8'/><ellipse cx='50' cy='50' rx='40' ry='20' fill='none' stroke='%2300CED1' stroke-width='2' opacity='0.8'/><ellipse cx='50' cy='50' rx='30' ry='15' fill='none' stroke='%2300CED1' stroke-width='2' opacity='0.6'/><ellipse cx='50' cy='50' rx='20' ry='10' fill='none' stroke='%2300CED1' stroke-width='2' opacity='0.4'/><ellipse cx='50' cy='50' rx='20' ry='40' fill='none' stroke='%239b59b6' stroke-width='2' opacity='0.8'/><ellipse cx='50' cy='50' rx='15' ry='30' fill='none' stroke='%239b59b6' stroke-width='2' opacity='0.6'/><ellipse cx='50' cy='50' rx='10' ry='20' fill='none' stroke='%239b59b6' stroke-width='2' opacity='0.4'/><line x1='10' y1='50' x2='90' y2='50' stroke='%23e74c3c' stroke-width='1.5' opacity='0.7'/><line x1='50' y1='10' x2='50' y2='90' stroke='%233498db' stroke-width='1.5' opacity='0.7'/></svg>">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,7 +26,6 @@
         
         <div class="controls">
             <div class="control-group">
-                <button id="mainAxisToggle" class="primary-btn">Switch to Coefficients View</button>
                 <button id="resetView">Reset View</button>
                 <button id="toggleGrid">Toggle Grid</button>
             </div>
@@ -105,6 +114,10 @@
                         </div>
                     </div>
                 </details>
+            </div>
+            
+            <div class="control-group">
+                <button id="mainAxisToggle" class="primary-btn">Switch to Coefficients View</button>
             </div>
             
             <div class="info">

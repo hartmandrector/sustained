@@ -1,5 +1,19 @@
 # Sustained Speeds Chart
 
+<div align="center">
+
+![Sustained Speeds Chart - Dual Coordinate Visualization](preview.png)
+
+*Interactive aerodynamic visualization showing the transformation between speed-space and coefficient-space*
+
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-E34F26?style=flat&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+</div>
+
+---
+
 An interactive aerodynamic visualization tool that seamlessly transforms between speed-space and coefficient-space coordinate systems. Built for analyzing sustained flight performance with smooth, real-time interpolation between fundamentally different axis representations.
 
 ## Overview
