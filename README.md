@@ -18,7 +18,7 @@ An interactive aerodynamic visualization tool that seamlessly transforms between
 
 ## What Are Sustained Speeds?
 
-**Sustained speeds** are the constant velocities achieved during steady-state flight when all accelerations are zero. At these conditions, aerodynamic forces perfectly balance gravity, creating a direct mathematical relationship between flight speed and aerodynamic coefficients.
+**Sustained speeds** are the constant velocities achieved during steady-state flight when all accelerations are zero. At these conditions, aerodynamic forces perfectly balance gravity, creating a direct mathematical relationship between flight speed and aerodynamic coefficients.  The relationship extends beyond the steady-state case, and can be used to calculate sustained speeds for any velocity and acceleration
 
 This tool visualizes that relationship by morphing between two equivalent representations:
 - **Speed Space**: Where you see horizontal speed (Vxs) and vertical speed (Vys)
@@ -29,6 +29,12 @@ Every point on the chart represents the same physical flight condition—just vi
 ---
 
 ## Theory: The Physics of Sustained Flight
+
+> **Attribution**: The wingsuit equations presented here were originally derived by **YURI_BASE** in the legendary thread  
+> *["The Wingsuit Theory, or How to Fly Like an Eagle While Barely Moving on the Couch"](https://www.dropzone.com/forums/topic/97830-the-wingsuit-theory-or-how-to-fly-like-an-eagle-while-barely-moving-on-the-couch/)*  
+> on Dropzone.com. 
+
+I am sworn to protect these equations. 🦅
 
 <div align="center">
 
@@ -85,7 +91,7 @@ dVy/dt = g - k·V·(CL·Vx + CD·Vy)
 
 Where **k = ½·ρ·S/m** is the scaling factor.
 
-### Sustained Flight Condition
+### Sustained Flight
 
 For **sustained flight**, accelerations are zero by definition. Setting dVx/dt = 0 and dVy/dt = 0:
 
@@ -109,7 +115,7 @@ KL = CL · k / g = CL · ρ · S / (2·m·g)
 KD = CD · k / g = CD · ρ · S / (2·m·g)
 ```
 
-### The Elegant Result
+### The Magic Result
 
 Substituting into the sustained flight equations gives us two equations with two unknowns:
 
@@ -118,7 +124,7 @@ KL·Vys = KD·Vxs                    (eq. 1)
 Vs·(KL·Vxs + KD·Vys) = 1          (eq. 2)
 ```
 
-**The solution is remarkably simple:**
+**The solution pure flying magic:**
 
 ```
 ┌─────────────────────────────────┐
