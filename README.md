@@ -16,9 +16,147 @@
 
 An interactive aerodynamic visualization tool that seamlessly transforms between speed-space and coefficient-space coordinate systems. Built for analyzing sustained flight performance with smooth, real-time interpolation between fundamentally different axis representations.
 
+## What Are Sustained Speeds?
+
+**Sustained speeds** are the constant velocities achieved during steady-state flight when all accelerations are zero. At these conditions, aerodynamic forces perfectly balance gravity, creating a direct mathematical relationship between flight speed and aerodynamic coefficients.
+
+This tool visualizes that relationship by morphing between two equivalent representations:
+- **Speed Space**: Where you see horizontal speed (Vxs) and vertical speed (Vys)
+- **Coefficient Space**: Where you see lift coefficient (CL/KL) and drag coefficient (CD/KD)
+
+Every point on the chart represents the same physical flight condition—just viewed through different mathematical lenses.
+
+---
+
+## Theory: The Physics of Sustained Flight
+
+<div align="center">
+
+![Wingsuit Equations Derivation](WSE%20Derivation.gif)
+
+*Derivation of the sustained flight equations from first principles*
+
+</div>
+
+### Force Balance in Flight
+
+Consider a body in flight with velocity **V** at angle α from horizontal. Four forces act on it:
+
+```
+           L (Lift)
+           ↑
+           |
+    D ←----●----> V (velocity)
+           |
+           ↓
+           W (Weight)
+```
+
+Summing forces in the x (horizontal) and y (vertical) directions:
+
+```
+Fx = m·ax = L·sin(α) - D·cos(α)
+Fy = m·ay = m·g - L·cos(α) - D·sin(α)
+```
+
+### Aerodynamic Forces
+
+From aerodynamics, lift and drag are:
+
+```
+L = ½·CL·ρ·S·V²
+D = ½·CD·ρ·S·V²
+```
+
+Where:
+- **CL, CD** = dimensionless lift and drag coefficients
+- **ρ** = air density (kg/m³)
+- **S** = reference wing area (m²)
+- **V** = total airspeed = √(Vx² + Vy²)
+
+### The Equations of Motion
+
+Since sin(α) = Vy/V and cos(α) = Vx/V, we can derive the equations of motion:
+
+```
+dVx/dt = k·V·(CL·Vy - CD·Vx)
+dVy/dt = g - k·V·(CL·Vx + CD·Vy)
+```
+
+Where **k = ½·ρ·S/m** is the scaling factor.
+
+### Sustained Flight Condition
+
+For **sustained flight**, accelerations are zero by definition. Setting dVx/dt = 0 and dVy/dt = 0:
+
+```
+k·Vs·(CL·Vys - CD·Vxs) = 0
+k·Vs·(CL·Vxs + CD·Vys) = g
+```
+
+Where Vs = √(Vxs² + Vys²) is the sustained total airspeed.
+
+---
+
+## K-Coefficients: Simplifying the Math
+
+### Definition
+
+To eliminate the scaling factor from our equations, we define **K-coefficients**:
+
+```
+KL = CL · k / g = CL · ρ · S / (2·m·g)
+KD = CD · k / g = CD · ρ · S / (2·m·g)
+```
+
+### The Elegant Result
+
+Substituting into the sustained flight equations gives us two equations with two unknowns:
+
+```
+KL·Vys = KD·Vxs                    (eq. 1)
+Vs·(KL·Vxs + KD·Vys) = 1          (eq. 2)
+```
+
+**The solution is remarkably simple:**
+
+```
+┌─────────────────────────────────┐
+│  KL = Vxs / Vs³                 │
+│  KD = Vys / Vs³                 │
+│                                 │
+│  Or equivalently:               │
+│                                 │
+│  KL = Vxs / (Vxs² + Vys²)^1.5  │
+│  KD = Vys / (Vxs² + Vys²)^1.5  │
+└─────────────────────────────────┘
+```
+
+### Converting Back to C-Coefficients
+
+To recover the standard dimensionless coefficients:
+
+```
+CL = KL · g / k = KL · 2·m·g / (ρ·S)
+CD = KD · g / k = KD · 2·m·g / (ρ·S)
+```
+
+### Units of K-Coefficients
+
+The K-coefficients have dimensions of **inverse velocity squared**:
+
+| Notation | Units |
+|----------|-------|
+| s²/m² | seconds squared per meter squared |
+| 1/(m/s)² | inverse velocity squared |
+
+This makes physical sense: K-coefficients directly relate aerodynamic forces to speed squared, eliminating the need for separate dynamic pressure and mass calculations.
+
+---
+
 ## Overview
 
-This application provides a unique dual-coordinate visualization system for aerodynamic analysis. Watch as grid lines morph from straight speed lines into curved coefficient lines and back, revealing the relationship between sustained speeds (VXS, VYS) and aerodynamic coefficients (CL, CD or KL, KD).
+This application provides a unique dual-coordinate visualization system for aerodynamic analysis. Watch as grid lines morph from straight speed lines into curved coefficient lines and back, revealing the mathematical relationships derived above.
 
 ## Key Features
 
@@ -122,7 +260,7 @@ Load multiple polar curves to compare different wings, conditions, or configurat
 - **Coefficient View**: X-axis reversed (positive drag on left) following aerodynamic convention
 
 ### Coordinate Transformations
-- Speed to Coefficient: Uses sustained speed equations with scaling factor k = 0.5 × ρ × S / m
+- Speed to Coefficient: Uses the sustained speed equations derived above
 - All grid lines pre-computed in both coordinate systems
 - Interpolation performed on screen coordinates for smooth visual transitions
 
@@ -166,4 +304,4 @@ sustained/
 
 ---
 
-**Note**: This tool displays mathematical relationships for sustained flight conditions where speeds and coefficients maintain fixed relationships through force balance equations.
+**Note**: This tool visualizes the mathematical relationships derived in the [Theory section](#theory-the-physics-of-sustained-flight) above. The sustained flight equations `KL = Vxs/Vs³` and `KD = Vys/Vs³` create the beautiful curved transformations you see when switching between speed and coefficient views.

@@ -1556,6 +1556,13 @@ export class SimpleChart {
             this.ctx.fillText(`X-axis: ${xAxisText}`, legendX, 45);
             this.ctx.fillText(`Y-axis: ${yAxisText}`, legendX, 65);
             this.ctx.fillText('Speed grid lines are curved in this view', legendX, 85);
+            
+            // Add K-coefficient units note
+            if (this.coeffType === 'K') {
+                this.ctx.fillStyle = '#888';
+                this.ctx.fillText('KL, KD units: s²/m² (inverse velocity squared)', legendX, 105);
+                this.ctx.fillStyle = 'white'; // Reset fill style
+            }
         } else {
             // Speed space labels (speed grid is straight/rectangular)
             this.ctx.fillText('SPEED VIEW', legendX, 25);
