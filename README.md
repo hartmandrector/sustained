@@ -152,6 +152,18 @@ The K-coefficients have dimensions of **inverse velocity squared**:
 
 This makes physical sense: K-coefficients directly relate aerodynamic forces to speed squared, eliminating the need for separate dynamic pressure and mass calculations.
 
+### Calculating Coefficients from GPS Data
+
+Since K-coefficients depend only on velocity, they can be computed directly from GPS speed measurements during sustained flight:
+
+<div align="center">
+
+![Calculating K-Coefficients from GPS Data](GPS%20Calculation.gif)
+
+*Given horizontal and vertical speeds from GPS, calculate the corresponding K-coefficients*
+
+</div>
+
 ---
 
 ## Overview
