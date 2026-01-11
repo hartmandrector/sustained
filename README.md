@@ -311,7 +311,7 @@ sustained/
 - **Education**: Demonstrate coordinate system transformations with real aerodynamic data
 - **Data Exploration**: Interactive investigation of aerodynamic relationships
 
-Advanced Q and A
+### Advanced Q and A
 Q: What is negative drag?
 A: negative drag is when the paralell component of the acceleration points in the same direction as the velocity (this will happen when soaring or in a sustained climb )
 Q:  What about negative lift?
@@ -326,7 +326,9 @@ It appears that the negative half of the chart could be the backflying polar... 
 
 </div>
 Q: Are 8 quadrants enough?
-A: There are 8 main quadrants in the body frame (freeflying), but you can see its easy to see where aoa is negative (all back-flying like orientations), so 2 quadrants are enough for normal gliding flight, 4 if you include negative drag.
+A: There are 8 main quadrants in the body frame (freeflying), but you can see its easy to see where aoa is negative (all back-flying like orientations where lift vector points same direction flyer is facing), negative lift meaning lift points out your belly... 
+But also negative horizontal sustained speeds might mean back sliding (aoa >90 or <-90  lift points toward your feet instead of your head)
+So does our analytical continuation have 2 branches? 3 dimensions? imaginary components? these are the the real questions 
 
 
 
